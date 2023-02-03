@@ -4,6 +4,8 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import android.database.SQLException;
 import android.os.Bundle;
+import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -14,7 +16,6 @@ public class ActivityCadastro extends AppCompatActivity {
 
 //  Declarações das funções para capturar os valores inseridos nos campos
     private EditText getEditNome(){ return (EditText) findViewById(R.id.editTextName);}
-
     private EditText getEditValor(){ return (EditText) findViewById(R.id.editTextValue);}
 
     private EditText getEditQuantidadeAtual(){ return (EditText) findViewById(R.id.editTextQuantidadeAtual);}
@@ -31,6 +32,9 @@ public class ActivityCadastro extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_cadastro);
 
+        // Ativa o funcionamento do botão "voltar" ao menu superior
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
         //verifica se a activity foi aberta através de algum item da lista
         boolean isModeUpdate = isModeUpdateAndConfigure();
 
@@ -45,42 +49,62 @@ public class ActivityCadastro extends AppCompatActivity {
             // Instanciado o banco de dados
             HelperDB helperDB = new HelperDB(ActivityCadastro.this);
 
-            //  Declarações das variaveis para capturar os valores novos inseridos nos campos dentro da tela
-            // de EDITAR
-            String newNome = getEditNome().getText().toString().trim();
-            Double newValor = Double.valueOf(getEditValor().getText().toString().trim());
-            Integer newQuantidadeAtual = Integer.valueOf(getEditQuantidadeAtual().getText().toString().trim());
-            Integer newQuantidadeMinima = Integer.valueOf(getEditQuantidadeMinima().getText().toString().trim());
-
             try {
-                if(isModeUpdate) {
-                    // Se a verificacao do ModeUpdate for true entao serão atualizados os valores do produto
-                    // no banco
-                    if (newQuantidadeAtual >= newQuantidadeMinima) {
-                        helperDB.Update(new String[]{oldNameUpdatePK, oldValorUpdatePK, oldQuantidadeAtualUpdatePK, oldQuantidadeMinUpdatePK}, newNome, newValor, newQuantidadeAtual, newQuantidadeMinima);
-                        Toast.makeText(ActivityCadastro.this, "Atualizado com Sucesso!", Toast.LENGTH_SHORT).show();
-                        setResult(RESULT_OK);
+                try {
+                    //  Declarações das variaveis para capturar os valores novos inseridos nos campos dentro da tela
+                    // de EDITAR
+                    String newNome = getEditNome().getText().toString().trim();
+                    Double newValor = Double.valueOf(getEditValor().getText().toString().trim());
+                    Integer newQuantidadeAtual = Integer.valueOf(getEditQuantidadeAtual().getText().toString().trim());
+                    Integer newQuantidadeMinima = Integer.valueOf(getEditQuantidadeMinima().getText().toString().trim());
 
-                        finish();
+                    if (isModeUpdate) {
+                        // Se a verificacao do ModeUpdate for true entao serão atualizados os valores do produto
+                        // no banco
+                        if(getEditNome() != null && getEditNome().length() > 0) {
+                            if (newQuantidadeAtual >= newQuantidadeMinima) {
+                                helperDB.Update(new String[]{oldNameUpdatePK, oldValorUpdatePK, oldQuantidadeAtualUpdatePK, oldQuantidadeMinUpdatePK}, newNome, newValor, newQuantidadeAtual, newQuantidadeMinima);
+
+                                Toast.makeText(ActivityCadastro.this, "Atualizado com Sucesso!", Toast.LENGTH_SHORT).show();
+                                setResult(RESULT_OK);
+
+                                this.finish();
+
+                            } else {
+                                Toast.makeText(ActivityCadastro.this, "Repor estoque do produto!", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                        else {
+                            Toast.makeText(ActivityCadastro.this, "Preencha corretamente todos os campos!", Toast.LENGTH_SHORT).show();
+                        }
                     } else {
-                        Toast.makeText(ActivityCadastro.this, "Repor estoque do produto!", Toast.LENGTH_SHORT).show();
-                    }
-                }else{
-                    if (newQuantidadeAtual >= newQuantidadeMinima) {
-                        // se for false, serão cadastrados os produtos no banco
-                        long rowid = helperDB.Insert(newNome, newValor, newQuantidadeAtual, newQuantidadeMinima);
+                        if(getEditNome() != null && getEditNome().length() > 0) {
+                            if (newQuantidadeAtual >= newQuantidadeMinima) {
+                                // se for false, serão cadastrados os produtos no banco
 
-                        Toast.makeText(ActivityCadastro.this, "Cadastrado com Sucesso! nº:" + rowid, Toast.LENGTH_SHORT).show();
-                        getEditNome().setText("");
-                        getEditValor().setText("");
-                        getEditQuantidadeAtual().setText("");
-                        getEditQuantidadeMinima().setText("");
+                                long rowid = helperDB.Insert(newNome, newValor, newQuantidadeAtual, newQuantidadeMinima);
+                                Toast.makeText(ActivityCadastro.this, "Cadastrado com Sucesso! nº:" + rowid, Toast.LENGTH_SHORT).show();
 
-                        getEditNome().requestFocus();
-                        setResult(RESULT_OK);
-                    } else {
-                        Toast.makeText(ActivityCadastro.this, "Repor estoque do produto!", Toast.LENGTH_SHORT).show();
+                                Log.d("Valor inserido", String.valueOf(rowid));
+
+                                getEditNome().setText("");
+                                getEditValor().setText("");
+                                getEditQuantidadeAtual().setText("");
+                                getEditQuantidadeMinima().setText("");
+
+                                getEditNome().requestFocus();
+                                setResult(RESULT_OK);
+
+                            } else {
+                                Toast.makeText(ActivityCadastro.this, "Repor estoque do produto!", Toast.LENGTH_SHORT).show();
+                            }
+                        } else {
+                            Toast.makeText(ActivityCadastro.this, "Preencha corretamente todos os campos!", Toast.LENGTH_SHORT).show();
+                        }
+
                     }
+                } catch (NumberFormatException nfe) {
+                    Toast.makeText(ActivityCadastro.this, "Preencha corretamente todos os campos!", Toast.LENGTH_SHORT).show();
                 }
             } catch (SQLException e) {
                 new AlertDialog.Builder(this).setTitle("SQL Erro").setMessage(e.getMessage()).setNeutralButton("OK", null).show();
@@ -98,6 +122,24 @@ public class ActivityCadastro extends AppCompatActivity {
             setResult(RESULT_OK);
             return true;
         });
+    }
+
+    private boolean campoVazio() {
+        if(getEditNome() != null && getEditNome().length() > 0) {
+            return true;
+        }
+        else if(getEditValor() != null && getEditValor().length() > 0) {
+            return true;
+        }
+        else if(getEditQuantidadeAtual() != null && getEditQuantidadeAtual().length() > 0) {
+            return true;
+        }
+        else if(getEditQuantidadeMinima() != null && getEditQuantidadeMinima().length() > 0) {
+            return true;
+        }
+        else{
+            return false;
+        }
     }
 
     // Funcao para apagar os produtos
