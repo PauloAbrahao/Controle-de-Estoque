@@ -124,24 +124,6 @@ public class ActivityCadastro extends AppCompatActivity {
         });
     }
 
-    private boolean campoVazio() {
-        if(getEditNome() != null && getEditNome().length() > 0) {
-            return true;
-        }
-        else if(getEditValor() != null && getEditValor().length() > 0) {
-            return true;
-        }
-        else if(getEditQuantidadeAtual() != null && getEditQuantidadeAtual().length() > 0) {
-            return true;
-        }
-        else if(getEditQuantidadeMinima() != null && getEditQuantidadeMinima().length() > 0) {
-            return true;
-        }
-        else{
-            return false;
-        }
-    }
-
     // Funcao para apagar os produtos
     private void confirmDeleteDialog(){
         AlertDialog.Builder builder = new AlertDialog.Builder(this)
